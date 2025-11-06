@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  has_many :availabilities, dependent: :destroy
   enum :role, {
     property_manager: "property_manager",
     tenant: "tenant"
