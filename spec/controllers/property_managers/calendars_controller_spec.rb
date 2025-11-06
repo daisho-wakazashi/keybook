@@ -108,6 +108,9 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
       ].to_json
     end
 
+    # All create action requests should use Turbo Stream format
+    let(:request_params) { { availabilities: availabilities_json, format: :turbo_stream } }
+
     context 'when service succeeds (zero errors)' do
       let(:successful_service) do
         instance_double(CreateAvailabilitiesForUser,
@@ -121,22 +124,22 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
           .and_return(successful_service)
       end
 
-      it 'sets location header for redirect to calendar path' do
-        post :create, params: { availabilities: availabilities_json }
+      it 'renders the create template' do
+        post :create, params: request_params
 
-        expect(response.location).to eq(property_managers_calendar_url(date: Date.current))
+        expect(response).to render_template(:create)
       end
 
-      it 'sets a success notice' do
-        post :create, params: { availabilities: availabilities_json }
+      it 'sets a success notice in flash.now' do
+        post :create, params: request_params
 
-        expect(flash[:notice]).to eq(I18n.t('property_managers.calendar.created'))
+        expect(flash.now[:notice]).to eq(I18n.t('property_managers.calendar.created'))
       end
 
       it 'does not set an alert' do
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
 
-        expect(flash[:alert]).to be_nil
+        expect(flash.now[:alert]).to be_nil
       end
 
       it 'calls the service with correct parameters' do
@@ -144,13 +147,19 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
           .with(property_manager, availabilities_json)
           .and_return(successful_service)
 
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
       end
 
       it 'returns a created status' do
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
 
         expect(response).to have_http_status(:created)
+      end
+
+      it 'loads availabilities for the current week' do
+        post :create, params: request_params
+
+        expect(assigns(:availabilities)).not_to be_nil
       end
     end
 
@@ -168,29 +177,29 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
       end
 
       it 'returns unprocessable entity status' do
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
 
         expect(response).to have_http_status(:unprocessable_entity)
       end
 
-      it 'sets location header for redirect to calendar path' do
-        post :create, params: { availabilities: availabilities_json }
+      it 'renders the create template' do
+        post :create, params: request_params
 
-        expect(response.location).to eq(property_managers_calendar_url(date: Date.current))
+        expect(response).to render_template(:create)
       end
 
-      it 'sets an error alert with error messages' do
-        post :create, params: { availabilities: availabilities_json }
+      it 'sets an error alert with error messages in flash.now' do
+        post :create, params: request_params
 
         expected_message = I18n.t('property_managers.calendar.creation_errors',
                                    errors: 'End time must be after start time')
-        expect(flash[:alert]).to eq(expected_message)
+        expect(flash.now[:alert]).to eq(expected_message)
       end
 
       it 'does not set a notice' do
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
 
-        expect(flash[:notice]).to be_nil
+        expect(flash.now[:notice]).to be_nil
       end
 
       it 'calls the service with correct parameters' do
@@ -198,7 +207,13 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
           .with(property_manager, availabilities_json)
           .and_return(failed_service)
 
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
+      end
+
+      it 'loads availabilities for the current week' do
+        post :create, params: request_params
+
+        expect(assigns(:availabilities)).not_to be_nil
       end
     end
 
@@ -223,15 +238,15 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
       end
 
       it 'includes all error messages in the alert' do
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
 
         expected_message = I18n.t('property_managers.calendar.creation_errors',
                                    errors: error_messages.join(', '))
-        expect(flash[:alert]).to eq(expected_message)
+        expect(flash.now[:alert]).to eq(expected_message)
       end
 
       it 'returns unprocessable entity status' do
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
 
         expect(response).to have_http_status(:unprocessable_entity)
       end
@@ -250,19 +265,19 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
           .and_return(successful_service)
       end
 
-      it 'sets location header for redirect back to the same date on success' do
-        post :create, params: { availabilities: availabilities_json, date: specific_date.to_s }
+      it 'renders the create template on success' do
+        post :create, params: request_params.merge(date: specific_date.to_s)
 
-        expect(response.location).to eq(property_managers_calendar_url(date: specific_date))
+        expect(response).to render_template(:create)
       end
 
       it 'returns a created status on success' do
-        post :create, params: { availabilities: availabilities_json, date: specific_date.to_s }
+        post :create, params: request_params.merge(date: specific_date.to_s)
 
         expect(response).to have_http_status(:created)
       end
 
-      it 'redirects back to the same date on failure' do
+      it 'renders the create template on failure' do
         failed_service = instance_double(CreateAvailabilitiesForUser,
                                         success?: false,
                                         errors_full_messages: [ 'Some error' ])
@@ -270,10 +285,16 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
         allow(CreateAvailabilitiesForUser).to receive(:perform)
           .and_return(failed_service)
 
-        post :create, params: { availabilities: availabilities_json, date: specific_date.to_s }
+        post :create, params: request_params.merge(date: specific_date.to_s)
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.location).to eq(property_managers_calendar_url(date: specific_date))
+        expect(response).to render_template(:create)
+      end
+
+      it 'loads availabilities for the specified week' do
+        post :create, params: request_params.merge(date: specific_date.to_s)
+
+        expect(assigns(:availabilities)).not_to be_nil
       end
     end
 
@@ -290,10 +311,10 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
       end
 
       it 'still treats as failure and shows error message' do
-        post :create, params: { availabilities: availabilities_json }
+        post :create, params: request_params
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(flash[:alert]).to be_present
+        expect(flash.now[:alert]).to be_present
       end
     end
   end
@@ -354,6 +375,7 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
     let(:availabilities_json) do
       [ { start_time: 1.day.from_now.iso8601, end_time: 2.days.from_now.iso8601 } ].to_json
     end
+    let(:request_params) { { availabilities: availabilities_json, format: :turbo_stream } }
 
     it 'calls perform on the service class method' do
       successful_service = instance_double(CreateAvailabilitiesForUser,
@@ -362,7 +384,7 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
 
       expect(CreateAvailabilitiesForUser).to receive(:perform).and_return(successful_service)
 
-      post :create, params: { availabilities: availabilities_json }
+      post :create, params: request_params
     end
 
     it 'checks success? on the returned service instance' do
@@ -374,7 +396,7 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
 
       expect(successful_service).to receive(:success?).and_return(true)
 
-      post :create, params: { availabilities: availabilities_json }
+      post :create, params: request_params
     end
 
     it 'accesses errors_full_messages on the service instance when success? is false' do
@@ -386,7 +408,7 @@ RSpec.describe PropertyManagers::CalendarsController, type: :controller do
 
       expect(failed_service).to receive(:errors_full_messages).and_return([ 'Some error' ])
 
-      post :create, params: { availabilities: availabilities_json }
+      post :create, params: request_params
     end
   end
 end
