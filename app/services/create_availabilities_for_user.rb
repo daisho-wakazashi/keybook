@@ -44,45 +44,11 @@ class CreateAvailabilitiesForUser
 
       return [] if datetimes.empty?
 
-      # Group datetimes by date and find continuous blocks
-      blocks = []
-      datetimes.group_by(&:to_date).each do |_date, day_times|
-        blocks.concat(find_continuous_blocks(day_times))
-      end
-
-      blocks
-    end
-  end
-
-  def find_continuous_blocks(sorted_times)
-    return [] if sorted_times.empty?
-
-    blocks = []
-    current_block_start = sorted_times.first
-    current_block_end = sorted_times.first + 1.hour
-
-    # Handle single datetime case
-    if sorted_times.size == 1
-      blocks << { start_time: current_block_start, end_time: current_block_end }
-      return blocks
-    end
-
-    sorted_times.each_cons(2) do |current_time, next_time|
-      if next_time == current_time + 1.hour
-        # Extend current block
-        current_block_end = next_time + 1.hour
-      else
-        # Save current block and start new one
-        blocks << { start_time: current_block_start, end_time: current_block_end }
-        current_block_start = next_time
-        current_block_end = next_time + 1.hour
+      # Create one-hour availability slots for each datetime
+      datetimes.map do |datetime|
+        { start_time: datetime, end_time: datetime + 1.hour }
       end
     end
-
-    # Add the last block
-    blocks << { start_time: current_block_start, end_time: current_block_end }
-
-    blocks
   end
 
   def parsed_datetimes

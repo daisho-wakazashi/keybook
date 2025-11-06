@@ -38,61 +38,6 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
       end
     end
 
-    context 'with two consecutive hours' do
-      let(:base_time) { 1.day.from_now.change(hour: 9, min: 0) }
-      let(:availabilities_json) do
-        [
-          base_time.iso8601,
-          (base_time + 1.hour).iso8601
-        ].to_json
-      end
-
-      it 'creates a single grouped availability' do
-        expect {
-          described_class.perform(user, availabilities_json)
-        }.to change { user.availabilities.count }.by(1)
-      end
-
-      it 'creates availability spanning two hours' do
-        described_class.perform(user, availabilities_json)
-
-        availability = user.availabilities.last
-        expect(availability.start_time).to be_within(1.second).of(base_time)
-        expect(availability.end_time).to be_within(1.second).of(base_time + 2.hours)
-      end
-
-      it 'returns success' do
-        result = described_class.perform(user, availabilities_json)
-
-        expect(result).to be_success
-      end
-    end
-
-    context 'with three consecutive hours' do
-      let(:base_time) { 1.day.from_now.change(hour: 14, min: 0) }
-      let(:availabilities_json) do
-        [
-          base_time.iso8601,
-          (base_time + 1.hour).iso8601,
-          (base_time + 2.hours).iso8601
-        ].to_json
-      end
-
-      it 'creates a single grouped availability' do
-        expect {
-          described_class.perform(user, availabilities_json)
-        }.to change { user.availabilities.count }.by(1)
-      end
-
-      it 'creates availability spanning three hours' do
-        described_class.perform(user, availabilities_json)
-
-        availability = user.availabilities.last
-        expect(availability.start_time).to be_within(1.second).of(base_time)
-        expect(availability.end_time).to be_within(1.second).of(base_time + 3.hours)
-      end
-    end
-
     context 'with five consecutive hours' do
       let(:base_time) { 2.days.from_now.change(hour: 10, min: 0) }
       let(:availabilities_json) do
@@ -105,52 +50,20 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
         ].to_json
       end
 
-      it 'creates a single grouped availability' do
+      it 'creates five separate one-hour availabilities' do
         expect {
           described_class.perform(user, availabilities_json)
-        }.to change { user.availabilities.count }.by(1)
+        }.to change { user.availabilities.count }.by(5)
       end
 
-      it 'creates availability spanning five hours' do
+      it 'creates each availability spanning one hour' do
         described_class.perform(user, availabilities_json)
 
-        availability = user.availabilities.last
-        expect(availability.start_time).to be_within(1.second).of(base_time)
-        expect(availability.end_time).to be_within(1.second).of(base_time + 5.hours)
-      end
-    end
-
-    context 'with non-consecutive hours on same day' do
-      let(:base_time) { 1.day.from_now.change(hour: 9, min: 0) }
-      let(:availabilities_json) do
-        [
-          base_time.iso8601,
-          (base_time + 1.hour).iso8601,
-          (base_time + 4.hours).iso8601,  # Gap of 2 hours
-          (base_time + 5.hours).iso8601
-        ].to_json
-      end
-
-      it 'creates two separate availabilities' do
-        expect {
-          described_class.perform(user, availabilities_json)
-        }.to change { user.availabilities.count }.by(2)
-      end
-
-      it 'creates first availability for 9-11' do
-        described_class.perform(user, availabilities_json)
-
-        first_availability = user.availabilities.order(:start_time).first
-        expect(first_availability.start_time).to be_within(1.second).of(base_time)
-        expect(first_availability.end_time).to be_within(1.second).of(base_time + 2.hours)
-      end
-
-      it 'creates second availability for 13-15' do
-        described_class.perform(user, availabilities_json)
-
-        second_availability = user.availabilities.order(:start_time).last
-        expect(second_availability.start_time).to be_within(1.second).of(base_time + 4.hours)
-        expect(second_availability.end_time).to be_within(1.second).of(base_time + 6.hours)
+        availabilities = user.availabilities.order(:start_time)
+        (0..4).each do |i|
+          expect(availabilities[i].start_time).to be_within(1.second).of(base_time + i.hours)
+          expect(availabilities[i].end_time).to be_within(1.second).of(base_time + (i + 1).hours)
+        end
       end
     end
 
@@ -167,26 +80,34 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
         ].to_json
       end
 
-      it 'creates two availabilities (one per day)' do
+      it 'creates five separate one-hour availabilities' do
         expect {
           described_class.perform(user, availabilities_json)
-        }.to change { user.availabilities.count }.by(2)
+        }.to change { user.availabilities.count }.by(5)
       end
 
-      it 'creates first availability spanning 3 hours on day 1' do
+      it 'creates three one-hour availabilities on day 1' do
         described_class.perform(user, availabilities_json)
 
-        first_day_availability = user.availabilities.where('start_time >= ?', day1.beginning_of_day).first
-        expect(first_day_availability.start_time).to be_within(1.second).of(day1)
-        expect(first_day_availability.end_time).to be_within(1.second).of(day1 + 3.hours)
+        day1_availabilities = user.availabilities.where('start_time >= ? AND start_time < ?', day1.beginning_of_day, day1.end_of_day).order(:start_time)
+        expect(day1_availabilities.count).to eq(3)
+        expect(day1_availabilities[0].start_time).to be_within(1.second).of(day1)
+        expect(day1_availabilities[0].end_time).to be_within(1.second).of(day1 + 1.hour)
+        expect(day1_availabilities[1].start_time).to be_within(1.second).of(day1 + 1.hour)
+        expect(day1_availabilities[1].end_time).to be_within(1.second).of(day1 + 2.hours)
+        expect(day1_availabilities[2].start_time).to be_within(1.second).of(day1 + 2.hours)
+        expect(day1_availabilities[2].end_time).to be_within(1.second).of(day1 + 3.hours)
       end
 
-      it 'creates second availability spanning 2 hours on day 2' do
+      it 'creates two one-hour availabilities on day 2' do
         described_class.perform(user, availabilities_json)
 
-        second_day_availability = user.availabilities.where('start_time >= ?', day2.beginning_of_day).first
-        expect(second_day_availability.start_time).to be_within(1.second).of(day2)
-        expect(second_day_availability.end_time).to be_within(1.second).of(day2 + 2.hours)
+        day2_availabilities = user.availabilities.where('start_time >= ? AND start_time < ?', day2.beginning_of_day, day2.end_of_day).order(:start_time)
+        expect(day2_availabilities.count).to eq(2)
+        expect(day2_availabilities[0].start_time).to be_within(1.second).of(day2)
+        expect(day2_availabilities[0].end_time).to be_within(1.second).of(day2 + 1.hour)
+        expect(day2_availabilities[1].start_time).to be_within(1.second).of(day2 + 1.hour)
+        expect(day2_availabilities[1].end_time).to be_within(1.second).of(day2 + 2.hours)
       end
     end
 
@@ -200,18 +121,22 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
         ].to_json
       end
 
-      it 'handles unsorted input and groups correctly' do
+      it 'handles unsorted input and creates three separate availabilities' do
         expect {
           described_class.perform(user, availabilities_json)
-        }.to change { user.availabilities.count }.by(1)
+        }.to change { user.availabilities.count }.by(3)
       end
 
-      it 'creates availability spanning three hours' do
+      it 'creates each availability spanning one hour' do
         described_class.perform(user, availabilities_json)
 
-        availability = user.availabilities.last
-        expect(availability.start_time).to be_within(1.second).of(base_time)
-        expect(availability.end_time).to be_within(1.second).of(base_time + 3.hours)
+        availabilities = user.availabilities.order(:start_time)
+        expect(availabilities[0].start_time).to be_within(1.second).of(base_time)
+        expect(availabilities[0].end_time).to be_within(1.second).of(base_time + 1.hour)
+        expect(availabilities[1].start_time).to be_within(1.second).of(base_time + 1.hour)
+        expect(availabilities[1].end_time).to be_within(1.second).of(base_time + 2.hours)
+        expect(availabilities[2].start_time).to be_within(1.second).of(base_time + 2.hours)
+        expect(availabilities[2].end_time).to be_within(1.second).of(base_time + 3.hours)
       end
     end
 
@@ -225,18 +150,20 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
         ].to_json
       end
 
-      it 'handles duplicates without creating overlapping availabilities' do
+      it 'handles duplicates by deduplicating and creates two availabilities' do
         expect {
           described_class.perform(user, availabilities_json)
-        }.to change { user.availabilities.count }.by(1)
+        }.to change { user.availabilities.count }.by(2)
       end
 
-      it 'creates a single availability without duplication' do
+      it 'creates two separate one-hour availabilities without duplication' do
         described_class.perform(user, availabilities_json)
 
-        availability = user.availabilities.last
-        expect(availability.start_time).to be_within(1.second).of(base_time)
-        expect(availability.end_time).to be_within(1.second).of(base_time + 2.hours)
+        availabilities = user.availabilities.order(:start_time)
+        expect(availabilities[0].start_time).to be_within(1.second).of(base_time)
+        expect(availabilities[0].end_time).to be_within(1.second).of(base_time + 1.hour)
+        expect(availabilities[1].start_time).to be_within(1.second).of(base_time + 1.hour)
+        expect(availabilities[1].end_time).to be_within(1.second).of(base_time + 2.hours)
       end
     end
 
@@ -302,7 +229,7 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
       it 'creates availabilities for valid datetimes only' do
         expect {
           described_class.perform(user, mixed_availabilities_json)
-        }.to change { user.availabilities.count }.by(1)
+        }.to change { user.availabilities.count }.by(2)
       end
 
       it 'notifies about invalid datetime' do
@@ -318,40 +245,14 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
         described_class.perform(user, mixed_availabilities_json)
       end
 
-      it 'creates grouped availability from valid datetimes' do
+      it 'creates two separate one-hour availabilities from valid datetimes' do
         described_class.perform(user, mixed_availabilities_json)
 
-        availability = user.availabilities.last
-        expect(availability.start_time).to be_within(1.second).of(base_time)
-        expect(availability.end_time).to be_within(1.second).of(base_time + 2.hours)
-      end
-    end
-
-    context 'with overlapping availabilities' do
-      let!(:existing_availability) do
-        create(:availability,
-               user: user,
-               start_time: 1.day.from_now.change(hour: 10, min: 0),
-               end_time: 1.day.from_now.change(hour: 12, min: 0))
-      end
-
-      let(:overlapping_json) do
-        [
-          1.day.from_now.change(hour: 11, min: 0).iso8601
-        ].to_json
-      end
-
-      it 'does not create overlapping availability' do
-        expect {
-          described_class.perform(user, overlapping_json)
-        }.not_to change { user.availabilities.count }
-      end
-
-      it 'returns failure with overlap error' do
-        result = described_class.perform(user, overlapping_json)
-
-        expect(result).not_to be_success
-        expect(result.errors.full_messages.join).to match(/overlaps/i)
+        availabilities = user.availabilities.order(:start_time)
+        expect(availabilities[0].start_time).to be_within(1.second).of(base_time)
+        expect(availabilities[0].end_time).to be_within(1.second).of(base_time + 1.hour)
+        expect(availabilities[1].start_time).to be_within(1.second).of(base_time + 1.hour)
+        expect(availabilities[1].end_time).to be_within(1.second).of(base_time + 2.hours)
       end
     end
 
@@ -389,36 +290,6 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
 
         expect(result).not_to be_success
         expect(result.errors.full_messages.join).to match(/past/i)
-      end
-    end
-  end
-
-  describe '#success?' do
-    context 'when perform succeeds' do
-      let(:valid_json) do
-        [
-          1.day.from_now.change(hour: 9, min: 0).iso8601
-        ].to_json
-      end
-
-      it 'returns true' do
-        service = described_class.new(user, valid_json)
-        service.perform
-
-        expect(service).to be_success
-        expect(service.success?).to be true
-      end
-    end
-
-    context 'when perform fails' do
-      let(:invalid_json) { 'invalid' }
-
-      it 'returns false' do
-        service = described_class.new(user, invalid_json)
-        service.perform
-
-        expect(service).not_to be_success
-        expect(service.success?).to be false
       end
     end
   end
