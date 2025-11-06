@@ -15,7 +15,7 @@ RSpec.describe CreateAvailabilitiesForUser, type: :service do
   describe '#perform' do
     context 'with a single datetime' do
       let(:datetime) { 1.day.from_now.change(hour: 9, min: 0) }
-      let(:availabilities_json) { [datetime.iso8601].to_json }
+      let(:availabilities_json) { [ datetime.iso8601 ].to_json }
 
       it 'creates one availability for the user' do
         expect {

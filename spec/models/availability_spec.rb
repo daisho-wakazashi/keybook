@@ -28,7 +28,6 @@ RSpec.describe Availability, type: :model do
   end
 
   describe 'validations' do
-
     context 'start_time' do
       it 'is required' do
         availability = Availability.new(
