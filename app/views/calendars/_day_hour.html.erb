@@ -1,0 +1,36 @@
+<%
+  # Required locals:
+  # - day: Date object for this cell
+  # - hour: Integer hour (0-23)
+  # - selectable: Boolean, whether cells can be selected
+  # - availabilities: Array of availability objects
+
+  # Use local timezone (Time.zone) instead of UTC
+  cell_datetime = Time.zone.local(day.year, day.month, day.day, hour, 0, 0)
+  cell_id = "cell-#{day.to_s}-#{hour}"
+
+  # Check if this cell has an availability
+  has_availability = availabilities.any? do |avail|
+    # Convert to local timezone for comparison
+    avail_start = avail.start_time.in_time_zone(Time.zone)
+    avail_end = avail.end_time.in_time_zone(Time.zone)
+    avail_start <= cell_datetime && avail_end > cell_datetime
+  end
+
+  css_classes = ["week-calendar-hour-cell"]
+  css_classes << "week-calendar-hour-cell-selectable" if selectable
+  css_classes << "week-calendar-hour-cell-availability" if has_availability
+%>
+
+<div
+  id="<%= cell_id %>"
+  class="<%= css_classes.join(' ') %>"
+  <% if selectable %>
+    data-calendar-selection-target="cell"
+    data-date="<%= day.to_s %>"
+    data-hour="<%= hour %>"
+    data-datetime="<%= cell_datetime.iso8601 %>"
+    data-action="mousedown->calendar-selection#startSelection mouseover->calendar-selection#updateSelection"
+  <% end %>
+>
+</div>

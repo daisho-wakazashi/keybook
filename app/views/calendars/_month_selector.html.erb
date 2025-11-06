@@ -1,0 +1,57 @@
+<div class="month-calendar" data-controller="month-calendar">
+  <div class="month-calendar-header">
+    <%= link_to local_assigns[:calendar_path].call(date: (@date - 1.month).to_s), class: "month-calendar-nav-button" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    <% end %>
+    <div class="month-calendar-title">
+      <%= t("calendar.months.#{@date.strftime('%B').downcase}") %> <%= @date.year %>
+    </div>
+    <%= link_to local_assigns[:calendar_path].call(date: (@date + 1.month).to_s), class: "month-calendar-nav-button" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    <% end %>
+  </div>
+
+  <div class="month-calendar-grid">
+    <% %w[sun mon tue wed thu fri sat].each do |day| %>
+      <div class="month-calendar-day-header">
+        <%= t("calendar.days_short.#{day}")[0] %>
+      </div>
+    <% end %>
+
+    <%
+      month_start = @date.beginning_of_month.beginning_of_week(:sunday)
+      month_end = @date.end_of_month.end_of_week(:sunday)
+      current_week_number = nil
+    %>
+
+    <% (month_start..month_end).each do |day| %>
+      <%
+        is_today = day == Date.current
+        is_current_month = day.month == @date.month
+        week_start = day.beginning_of_week(:sunday)
+        week_end = week_start + 6.days
+        is_selected_week = week_start == @week_start
+
+        # Track week changes for row grouping
+        week_number = day.cweek
+        is_week_start = day.wday == 0 # Sunday
+
+        css_classes = ["month-calendar-day"]
+        css_classes << "month-calendar-day-today" if is_today
+        css_classes << "month-calendar-day-selected-week" if is_selected_week
+        css_classes << "month-calendar-day-other-month" if !is_current_month
+        css_classes << "month-calendar-day-current-month" if is_current_month
+      %>
+      <%= link_to day.day, local_assigns[:calendar_path].call(date: day.to_s),
+                  class: css_classes.join(" "),
+                  data: {
+                    month_calendar_target: "day",
+                    week_start: week_start.to_s
+                  } %>
+    <% end %>
+  </div>
+</div>
