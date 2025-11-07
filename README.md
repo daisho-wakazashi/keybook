@@ -35,11 +35,17 @@ In this app, I've made a few assumptions.
 ## How to Use
 There's a bit of hardcoded logic see [assumptions](#assumptions)
 
-**NB I've created the basic Rails app in the `main` branch. I've separated the code into separate branches/PRs to make it easier to read.
-The `availabilities` branch and [PR](https://github.com/daisho-wakazashi/keybook/pull/2) contains the initial Availabilities functionality
-The `bookings` branch and [PR](https://github.com/daisho-wakazashi/keybook/pull/3) contains the initial Bookings functionality (includes allowing the booking to be seen on the Availability view)**
+**NB I've created the basic Rails app in the `main` branch. I've separated the code into separate branches/PRs to make it easier to read.**
+
+**The `availabilities` branch and [PR](https://github.com/daisho-wakazashi/keybook/pull/2) contains the initial Availabilities functionality**
+
+**The `bookings` branch and [PR](https://github.com/daisho-wakazashi/keybook/pull/3) contains the initial Bookings functionality (includes allowing the booking to be seen on the Availability view)**
 
 ***Also, I haven't filled out the PRs as I normally would because, POC- but rest assured, in prod I'd be referencing a requirements doc, description, notes on testing etc***
+
+I do like including things like Mermaid charts in the the documentation but there wasn't really much need to do so here.
+
+Also, I coincidentally saw [a RubyLLM example that included booking a meeting](https://github.com/crmne/ruby_llm/releases/tag/1.9.0) which I thought was something appropriate too. 
 
 ### TLDR
 1. Make sure you've got an up-to-date Rails 8.1 installation with Postgres locally
