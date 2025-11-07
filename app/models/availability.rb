@@ -1,8 +1,7 @@
 class Availability < ApplicationRecord
   belongs_to :user
-  has_one :booking, dependent: :destroy
+  has_one :booking, dependent: :destroy # TODO needs to notify booking tenant if the availability is destroyed
 
-  # Validations
   validates :start_time, presence: true
   validates :end_time, presence: true
 
