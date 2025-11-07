@@ -1,0 +1,49 @@
+<%
+  # Configuration
+  start_hour = local_assigns.fetch(:start_hour, 7)
+  end_hour = local_assigns.fetch(:end_hour, 21)  # 9 PM (21:00)
+  availabilities = local_assigns.fetch(:availabilities, [])
+
+  hours = (start_hour...end_hour).to_a
+  days = (@week_start..@week_end).to_a
+%>
+
+<div class="week-calendar">
+  <div class="week-calendar-grid">
+    <!-- Time column header (empty cell) -->
+    <div class="week-calendar-time-column border-b border-gray-200"></div>
+
+    <!-- Day headers -->
+    <div class="week-calendar-days-container">
+      <% days.each do |day| %>
+        <%
+          is_today = day == Date.current
+          day_name = t("calendar.days_short.#{day.strftime('%a').downcase}")
+          css_classes = ["week-calendar-day-header"]
+          css_classes << "week-calendar-day-header-today" if is_today
+        %>
+        <div class="<%= css_classes.join(' ') %>">
+          <div class="font-semibold"><%= day_name %></div>
+          <div class="text-lg"><%= day.day %></div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Time slots and grid cells -->
+    <% hours.each do |hour| %>
+      <!-- Time label -->
+      <div class="week-calendar-time-column">
+        <div class="week-calendar-time-slot">
+          <%= Time.new(2000, 1, 1, hour, 0, 0).strftime("%-I %p") %>
+        </div>
+      </div>
+
+      <!-- Day cells for this hour -->
+      <div class="week-calendar-days-container">
+        <% days.each do |day| %>
+          <%= render "tenants/bookings/day_hour_tenant", day: day, hour: hour, availabilities: availabilities %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

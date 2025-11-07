@@ -2,7 +2,6 @@
   # Required locals:
   # - day: Date object for this cell
   # - hour: Integer hour (0-23)
-  # - selectable: Boolean, whether cells can be selected
   # - availabilities: Array of availability objects
 
   # Use local timezone (Time.zone) instead of UTC
@@ -18,26 +17,20 @@
 
   has_availability = availability_for_cell.present?
   is_booked = has_availability && availability_for_cell.booking.present?
-  booker_name = is_booked ? availability_for_cell.booking.booker.full_name : nil
+  is_selectable = has_availability && !is_booked
 
   css_classes = ["week-calendar-hour-cell"]
-  css_classes << "week-calendar-hour-cell-selectable" if selectable && !is_booked
   css_classes << "week-calendar-hour-cell-availability" if has_availability && !is_booked
-  css_classes << "week-calendar-hour-cell-booked" if is_booked
+  css_classes << "week-calendar-hour-cell-disabled" if !is_selectable
 %>
 
 <div
   id="<%= cell_id %>"
   class="<%= css_classes.join(' ') %>"
-  <% if selectable && !is_booked %>
-    data-calendar-selection-target="cell"
-    data-date="<%= day.to_s %>"
-    data-hour="<%= hour %>"
-    data-datetime="<%= cell_datetime.iso8601 %>"
-    data-action="mousedown->calendar-selection#startSelection mouseover->calendar-selection#updateSelection"
+  <% if is_selectable %>
+    data-tenant-booking-selection-target="cell"
+    data-availability-id="<%= availability_for_cell.id %>"
+    data-action="click->tenant-booking-selection#selectCell"
   <% end %>
 >
-  <% if is_booked %>
-    <span class="week-calendar-booker-name"><%= booker_name %></span>
-  <% end %>
 </div>

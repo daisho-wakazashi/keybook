@@ -1,0 +1,44 @@
+/*
+ * Tenant Booking Specific Styles
+ *
+ * Styles for tenant booking calendar interface
+ * - Single cell selection (no dragging)
+ * - Disabled cells for booked/unavailable slots
+ */
+
+/* Tenant Booking Controls */
+.tenant-booking-controls {
+  @apply bg-gray-50 rounded-lg p-4 mb-6;
+}
+
+.tenant-booking-instructions {
+  @apply text-sm text-gray-600 mb-3;
+}
+
+.tenant-booking-actions {
+  @apply flex items-center gap-3;
+}
+
+.tenant-booking-button-book {
+  @apply px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300;
+}
+
+/* Cell States for Tenant View */
+.week-calendar-hour-cell-disabled {
+  @apply bg-gray-100 cursor-not-allowed;
+}
+
+/* Availability cells in tenant view (unbooked) */
+#booking-calendar-container .week-calendar-hour-cell-availability {
+  @apply bg-green-100 border-2 border-green-400 cursor-pointer hover:bg-green-200 transition-colors;
+}
+
+/* Override for selected cells in tenant view - must come after availability to override */
+#booking-calendar-container .week-calendar-hour-cell-selected {
+  @apply bg-blue-300 border-2 border-blue-600;
+}
+
+/* Ensure selected cells show even when hovering */
+#booking-calendar-container .week-calendar-hour-cell-selected:hover {
+  @apply bg-blue-400;
+}

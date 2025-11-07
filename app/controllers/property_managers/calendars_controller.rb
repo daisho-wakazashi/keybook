@@ -27,6 +27,7 @@ module PropertyManagers
       @week_start = @date.beginning_of_week(:sunday)
       @week_end = @week_start + 6.days
       @availabilities = current_user.availabilities
+                                    .includes(booking: :booker)
                                     .where(start_time: @week_start.beginning_of_day..@week_end.end_of_day)
                                     .order(:start_time)
     end
