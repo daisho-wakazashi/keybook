@@ -1,0 +1,36 @@
+<%
+  # Required locals:
+  # - day: Date object for this cell
+  # - hour: Integer hour (0-23)
+  # - availabilities: Array of availability objects
+
+  # Use local timezone (Time.zone) instead of UTC
+  cell_datetime = Time.zone.local(day.year, day.month, day.day, hour, 0, 0)
+  cell_id = "cell-#{day.to_s}-#{hour}"
+
+  # Check if this cell has an availability and if it's booked
+  availability_for_cell = availabilities.find do |avail|
+    avail_start = avail.start_time.in_time_zone(Time.zone)
+    avail_end = avail.end_time.in_time_zone(Time.zone)
+    avail_start <= cell_datetime && avail_end > cell_datetime
+  end
+
+  has_availability = availability_for_cell.present?
+  is_booked = has_availability && availability_for_cell.booking.present?
+  is_selectable = has_availability && !is_booked
+
+  css_classes = ["week-calendar-hour-cell"]
+  css_classes << "week-calendar-hour-cell-availability" if has_availability && !is_booked
+  css_classes << "week-calendar-hour-cell-disabled" if !is_selectable
+%>
+
+<div
+  id="<%= cell_id %>"
+  class="<%= css_classes.join(' ') %>"
+  <% if is_selectable %>
+    data-tenant-booking-selection-target="cell"
+    data-availability-id="<%= availability_for_cell.id %>"
+    data-action="click->tenant-booking-selection#selectCell"
+  <% end %>
+>
+</div>

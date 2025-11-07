@@ -14,7 +14,7 @@ RSpec.describe Tenants::BookingsController, type: :controller do
     let(:booking) { create(:booking, booker: tenant, availability: availability) }
 
     it 'returns http success' do
-      get :show, params: { id: booking.id }
+      get :show, params: { id: property_manager.id }
       expect(response).to have_http_status(:success)
     end
   end
@@ -33,21 +33,21 @@ RSpec.describe Tenants::BookingsController, type: :controller do
 
       it 'calls the service with current_user and availability_id' do
         expect(CreateBookingForAvailability).to receive(:perform).with(tenant, availability.id.to_s)
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
       end
 
       it 'returns created status' do
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
         expect(response).to have_http_status(:created)
       end
 
       it 'sets a success flash message' do
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
         expect(flash[:notice]).to match(/created successfully/i)
       end
 
       it 'renders the create template' do
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
         expect(response).to render_template(:create)
       end
     end
@@ -63,26 +63,26 @@ RSpec.describe Tenants::BookingsController, type: :controller do
 
       it 'calls the service with current_user and availability_id' do
         expect(CreateBookingForAvailability).to receive(:perform).with(tenant, availability.id.to_s)
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
       end
 
       it 'returns unprocessable_entity status' do
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
         expect(response).to have_http_status(:unprocessable_entity)
       end
 
       it 'sets an error flash message' do
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
         expect(flash[:alert]).to match(/failed/i)
       end
 
       it 'includes the error messages in the flash' do
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
         expect(flash[:alert]).to include("Availability not found")
       end
 
       it 'renders the create template' do
-        post :create, params: { availability_id: availability.id }
+        post :create, params: { id: property_manager.id, availability_id: availability.id }
         expect(response).to render_template(:create)
       end
     end
