@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   has_many :availabilities, dependent: :destroy
+  has_many :bookings, foreign_key: :booker_id, dependent: :destroy
   enum :role, {
     property_manager: "property_manager",
     tenant: "tenant"

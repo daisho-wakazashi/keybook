@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_05_220357) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_07_000154) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -28,6 +28,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_05_220357) do
     t.index ["user_id"], name: "index_availabilities_on_user_id"
   end
 
+  create_table "bookings", force: :cascade do |t|
+    t.bigint "availability_id", null: false
+    t.bigint "booker_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["availability_id"], name: "index_bookings_on_availability_id", unique: true
+    t.index ["booker_id"], name: "index_bookings_on_booker_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "first_name", null: false
@@ -38,4 +47,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_05_220357) do
   end
 
   add_foreign_key "availabilities", "users"
+  add_foreign_key "bookings", "availabilities"
+  add_foreign_key "bookings", "users", column: "booker_id"
 end

@@ -1,5 +1,6 @@
 class Availability < ApplicationRecord
   belongs_to :user
+  has_one :booking, dependent: :destroy
 
   # Validations
   validates :start_time, presence: true
