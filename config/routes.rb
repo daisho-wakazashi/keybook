@@ -5,4 +5,9 @@ Rails.application.routes.draw do
   namespace :property_managers do
     resource :calendar, only: [ :show, :create ]
   end
+
+  # Tenants namespace
+  namespace :tenants do
+    resources :bookings, only: [ :show, :create ]
+  end
 end
