@@ -1,0 +1,55 @@
+<div id="calendar-container" class="calendar-container" data-controller="calendar-selection">
+  <div class="calendar-header">
+    <div class="calendar-header-left">
+      <h1 class="calendar-title"><%= t('property_managers.calendar.title') %></h1>
+
+      <div class="pm-calendar-controls">
+        <p class="pm-calendar-instructions">
+          <%= t('property_managers.calendar.instructions') %>
+        </p>
+        <div class="pm-calendar-actions">
+          <button
+            type="button"
+            class="pm-calendar-button-clear"
+            data-action="click->calendar-selection#clearSelection"
+          >
+            <%= t('property_managers.calendar.clear_selection') %>
+          </button>
+          <button
+            type="button"
+            class="pm-calendar-button-save"
+            data-action="click->calendar-selection#saveSelection"
+            data-calendar-selection-target="saveButton"
+            disabled
+          >
+            <%= t('property_managers.calendar.save_availability') %>
+          </button>
+          <span class="pm-calendar-selection-info" data-calendar-selection-target="selectionInfo">
+            <%= t('property_managers.calendar.selection_summary') %>: <span data-calendar-selection-target="selectionCount">0</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <%= render 'calendars/month_selector', calendar_path: ->(date:) { property_managers_calendar_path(date: date) } %>
+
+    <div class="calendar-header-right">
+      <%= link_to t('calendar.navigation.today'), property_managers_calendar_path(date: Date.current.to_s), class: "calendar-nav-button-primary" %>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <h2 class="text-xl font-semibold text-gray-800 mb-2">
+      <%= t('calendar.week_view') %>:
+      <%= @week_start.strftime('%b %d') %> - <%= @week_end.strftime('%b %d, %Y') %>
+    </h2>
+  </div>
+
+  <%= render 'calendars/week_grid',
+             selectable: true,
+             availabilities: @availabilities %>
+
+  <%= form_with url: property_managers_calendar_path, method: :post, data: { calendar_selection_target: "form" } do |f| %>
+    <%= f.hidden_field :availabilities, data: { calendar_selection_target: "availabilitiesInput" } %>
+  <% end %>
+</div>
